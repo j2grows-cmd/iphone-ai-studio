@@ -40,6 +40,18 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
+      - name: Check Pages configuration
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set +e
+          gh api repos/${{ github.repository }}/pages >/dev/null
+          result=$?
+          set -e
+          if [ "$result" -ne 0 ]; then
+            echo "::error title=GitHub Pages is not enabled::Enable Pages for this repository at https://github.com/${{ github.repository }}/settings/pages. Choose Build and deployment source: GitHub Actions, then re-run this workflow."
+            exit 1
+          fi
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
