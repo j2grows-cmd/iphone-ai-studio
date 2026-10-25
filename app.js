@@ -1,4 +1,5 @@
 import { CreateMLCEngine } from "@mlc-ai/web-llm";
+import { Txt2ImgWorkerClient } from "web-txt2img";
 
 const MODEL_ID = "Qwen2.5-0.5B-Instruct-q4f16_1-MLC";
 const $ = (id) => document.getElementById(id);
@@ -132,3 +133,130 @@ document.querySelectorAll(".tab").forEach((tab) => tab.addEventListener("click",
 }));
 
 checkCapabilities();
+
+
+// Image Studio: SD-Turbo runs in a dedicated worker and uses WebGPU locally.
+let imageClient = null;
+let imageModelReady = false;
+let imageBusy = false;
+let currentImageAbort = null;
+let currentImageUrl = null;
+
+function setImageModelStatus(message) {
+  $("image-model-status").textContent = message;
+}
+function setImageStatus(message) {
+  $("image-status").textContent = message;
+}
+function setImageProgress(progress) {
+  if (typeof progress?.pct === "number") $("image-progress").value = Math.max(0, Math.min(100, progress.pct));
+  const detail = progress?.message || progress?.phase || "Working…";
+  const pct = typeof progress?.pct === "number" ? ` ${progress.pct}%` : "";
+  const downloaded = typeof progress?.bytesDownloaded === "number" && typeof progress?.totalBytesExpected === "number"
+    ? ` · ${(progress.bytesDownloaded / 1048576).toFixed(0)} / ${(progress.totalBytesExpected / 1048576).toFixed(0)} MB`
+    : "";
+  setImageStatus(`${detail}${pct}${downloaded}`);
+}
+
+$("load-image-model").addEventListener("click", async () => {
+  if (imageBusy || imageModelReady) return;
+  if (!window.isSecureContext) {
+    setImageModelStatus("HTTPS is required for browser GPU features. Open the deployed app over HTTPS.");
+    return;
+  }
+  if (!navigator.gpu) {
+    setImageModelStatus("WebGPU is not available in this browser. This image model cannot use a remote fallback.");
+    return;
+  }
+
+  imageBusy = true;
+  $("load-image-model").disabled = true;
+  $("image-progress").hidden = false;
+  $("image-progress").value = 0;
+  setImageModelStatus("Checking WebGPU and preparing the image worker…");
+  setImageStatus("First load downloads the model files. Keep this tab open and avoid switching apps.");
+  try {
+    imageClient = Txt2ImgWorkerClient.createDefault();
+    const caps = await imageClient.detect();
+    if (!caps?.webgpu) throw new Error("The image runtime did not detect WebGPU support.");
+    const loaded = await imageClient.load("sd-turbo", { backendPreference: ["webgpu"] }, setImageProgress);
+    if (!loaded?.ok) throw new Error(loaded?.message || loaded?.reason || "Image model failed to load.");
+    imageModelReady = true;
+    $("load-image-model").textContent = "Image model ready";
+    $("generate-image").disabled = false;
+    setImageModelStatus("SD-Turbo loaded. Image inference runs locally in this browser.");
+    setImageStatus("Ready to generate at 512 × 512. The first download may be several gigabytes.");
+    $("image-progress").value = 100;
+  } catch (error) {
+    console.error("Image model load failed:", error);
+    try { await imageClient?.unload(); } catch {}
+    imageClient = null;
+    imageModelReady = false;
+    $("load-image-model").disabled = false;
+    setImageModelStatus(`Could not load SD-Turbo: ${error?.message || "unknown error"}. Check WebGPU support, free memory and the browser console.`);
+    setImageStatus("No remote inference service was used.");
+  } finally {
+    imageBusy = false;
+  }
+});
+
+$("generate-image").addEventListener("click", async () => {
+  const prompt = $("image-prompt").value.trim();
+  if (!imageClient || !imageModelReady || !prompt || imageBusy) {
+    if (!prompt) setImageStatus("Enter an image prompt first.");
+    return;
+  }
+  imageBusy = true;
+  $("generate-image").disabled = true;
+  $("cancel-image").disabled = false;
+  $("image-progress").hidden = false;
+  $("image-progress").value = 0;
+  setImageStatus("Preparing local image generation…");
+  try {
+    const seedValue = $("image-seed").value.trim();
+    const params = { prompt };
+    if (seedValue !== "") {
+      const seed = Number(seedValue);
+      if (!Number.isSafeInteger(seed) || seed < 0) throw new Error("Seed must be a non-negative whole number.");
+      params.seed = seed;
+    }
+    const job = imageClient.generate(
+      params,
+      (progress) => setImageProgress({ ...progress, message: progress?.phase ? `Generating · ${progress.phase}` : "Generating locally" }),
+      { busyPolicy: "queue", debounceMs: 0 }
+    );
+    currentImageAbort = job.abort;
+    const result = await job.promise;
+    if (!result?.ok) throw new Error(result?.message || result?.reason || "Image generation failed.");
+    if (currentImageUrl) URL.revokeObjectURL(currentImageUrl);
+    currentImageUrl = URL.createObjectURL(result.blob);
+    const image = document.createElement("img");
+    image.src = currentImageUrl;
+    image.alt = prompt;
+    image.className = "generated-image";
+    const output = $("image-output");
+    output.replaceChildren(image);
+    const download = $("download-image");
+    download.href = currentImageUrl;
+    download.download = `iphone-ai-studio-${Date.now()}.png`;
+    download.classList.remove("disabled-link");
+    download.setAttribute("aria-disabled", "false");
+    setImageStatus(`Image generated locally${typeof result.timeMs === "number" ? ` in ${(result.timeMs / 1000).toFixed(1)} seconds` : ""}. Use Download PNG to save it.`);
+  } catch (error) {
+    console.error("Image generation failed:", error);
+    setImageStatus(`Generation failed: ${error?.message || "unknown error"}. Try a shorter prompt or reload the model if memory is low.`);
+  } finally {
+    currentImageAbort = null;
+    imageBusy = false;
+    $("generate-image").disabled = !imageModelReady;
+    $("cancel-image").disabled = true;
+  }
+});
+
+$("cancel-image").addEventListener("click", async () => {
+  if (!currentImageAbort) return;
+  $("cancel-image").disabled = true;
+  setImageStatus("Cancelling image generation…");
+  try { await currentImageAbort(); }
+  catch (error) { console.warn("Image cancellation reported:", error); }
+});
