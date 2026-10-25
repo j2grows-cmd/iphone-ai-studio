@@ -15,12 +15,10 @@
       <div><p class="eyebrow">LOCAL-FIRST · £0</p><h1>iPhone AI Studio</h1></div>
       <span id="gpu-pill" class="pill">Checking device…</span>
     </header>
-
     <nav class="tabs" aria-label="Studio mode">
       <button class="tab active" data-mode="text" type="button">Text Studio</button>
       <button class="tab" data-mode="image" type="button">Image Studio</button>
     </nav>
-
     <section class="card startup-card" aria-labelledby="startup-heading">
       <div class="section-heading"><div><p class="eyebrow">QUICK START</p><h2 id="startup-heading">Model startup</h2></div><span class="pill">On-device</span></div>
       <label for="startup-model">Prepare this model when the app opens</label>
@@ -32,7 +30,6 @@
       <p class="muted">Choose one model to auto-load. Its files can be cached after the first download, but iOS may clear browser storage. Loading both models together can exceed available memory.</p>
       <p id="startup-status" class="status" role="status" aria-live="polite">Models are loaded only when requested.</p>
     </section>
-
     <section id="text-panel" class="studio-panel">
       <div class="section-heading"><div><p class="eyebrow">ON-DEVICE INFERENCE</p><h2>Text Studio</h2></div><span class="pill">WebLLM</span></div>
       <div class="card model-card">
@@ -57,23 +54,28 @@
         <button id="send" class="button primary full" type="button" disabled>Generate response</button>
       </div>
     </section>
-
     <section id="image-panel" class="studio-panel" hidden>
-      <div class="section-heading"><div><p class="eyebrow">EXPERIMENTAL</p><h2>Image Studio</h2></div><span class="pill">WebGPU</span></div>
-      <div class="card">
+      <div class="section-heading"><div><p class="eyebrow">EXPERIMENTAL · LOCAL INFERENCE</p><h2>Image Studio</h2></div><span class="pill">WebGPU</span></div>
+      <div class="card model-card">
         <p class="label">Image generation backend</p>
-        <h3>Not connected yet</h3>
-        <p class="muted">This repository is being set up in the correct location. The image interface is reserved here, but a compatible in-browser diffusion model and runtime still need to be integrated and tested before this can generate images.</p>
+        <strong>SD-Turbo · browser WebGPU</strong>
+        <p class="muted">The image model runs on your device. First setup downloads model files; performance and memory use depend on your browser and device.</p>
+        <button id="load-image-model" class="button primary" type="button">Load image model</button>
+        <p id="image-model-status" class="status" role="status" aria-live="polite">Image model is not loaded.</p>
+        <progress id="image-progress" max="100" value="0" hidden></progress>
         <label for="image-prompt">Image prompt</label>
-        <textarea id="image-prompt" rows="4" placeholder="Describe the image you want to create…"></textarea>
-        <div class="settings-grid">
-          <div><label for="image-width">Width</label><select id="image-width"><option>256</option><option selected>512</option><option>768</option></select></div>
-          <div><label for="image-steps">Steps</label><select id="image-steps"><option>4</option><option selected>8</option><option>12</option></select></div>
+        <textarea id="image-prompt" rows="4" placeholder="Describe the image you want to create…">Mountain</textarea>
+        <label for="image-seed">Seed (optional)</label>
+        <input id="image-seed" type="number" min="0" step="1" placeholder="Random seed">
+        <div class="button-row">
+          <button id="generate-image" class="button primary" type="button" disabled>Generate image</button>
+          <button id="cancel-image" class="button secondary" type="button" disabled>Cancel</button>
         </div>
-        <p class="status">Image generation is intentionally disabled until its local backend is implemented. No prompt is sent anywhere.</p>
+        <p id="image-status" class="status" role="status" aria-live="polite">Load the image model to begin. No remote inference API is used.</p>
+        <div id="image-output" class="image-output" aria-live="polite"></div>
+        <a id="download-image" class="button secondary disabled-link" href="#" aria-disabled="true" tabindex="-1">Download PNG</a>
       </div>
     </section>
-
     <footer><p>Designed for device-local generation. Initial model downloads need internet; browser support and available memory vary.</p><a href="https://github.com/j2grows-cmd/iphone-ai-studio">View source</a></footer>
   </main>
   <script type="module" src="./app.js"></script>
