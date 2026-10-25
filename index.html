@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0d0d0d">
+  <meta name="description" content="A local-first AI studio for text and image generation.">
+  <title>iPhone AI Studio</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand-mark" aria-hidden="true">✳</div>
+      <div><p class="eyebrow">LOCAL-FIRST · £0</p><h1>iPhone AI Studio</h1></div>
+      <span id="gpu-pill" class="pill">Checking device…</span>
+    </header>
+
+    <nav class="tabs" aria-label="Studio mode">
+      <button class="tab active" data-mode="text" type="button">Text Studio</button>
+      <button class="tab" data-mode="image" type="button">Image Studio</button>
+    </nav>
+
+    <section id="text-panel" class="studio-panel">
+      <div class="section-heading"><div><p class="eyebrow">ON-DEVICE INFERENCE</p><h2>Text Studio</h2></div><span class="pill">WebLLM</span></div>
+      <div class="card model-card">
+        <div><p class="label">Language model</p><strong>Qwen2.5 · 0.5B Instruct</strong><p class="muted">Quantised model · first load downloads model files</p></div>
+        <button id="load-model" class="button primary" type="button">Load model</button>
+        <p id="model-status" class="status" role="status" aria-live="polite">Checking browser capabilities…</p>
+        <progress id="progress" max="100" value="0" hidden></progress>
+      </div>
+      <div class="card">
+        <label for="system-prompt">System instructions</label>
+        <textarea id="system-prompt" rows="4">You are a capable, creative assistant. Follow the user's requested tone, format and level of detail. Be honest about uncertainty.</textarea>
+        <div class="settings-grid">
+          <div><label for="temperature">Temperature <output id="temperature-value">0.8</output></label><input id="temperature" type="range" min="0" max="1.5" step="0.1" value="0.8"></div>
+          <div><label for="max-tokens">Response length</label><select id="max-tokens"><option value="128">Short</option><option value="256" selected>Medium</option><option value="512">Long</option></select></div>
+        </div>
+      </div>
+      <div class="card conversation-card">
+        <div class="section-heading"><h3>Conversation</h3><button id="clear-chat" class="button secondary" type="button">Clear</button></div>
+        <div id="messages" class="messages" aria-live="polite"><p class="empty">Load the model to begin. Conversations stay in this page's memory.</p></div>
+        <label for="user-prompt">Your prompt</label>
+        <textarea id="user-prompt" rows="3" placeholder="What would you like to create or explore?"></textarea>
+        <button id="send" class="button primary full" type="button" disabled>Generate response</button>
+      </div>
+    </section>
+
+    <section id="image-panel" class="studio-panel" hidden>
+      <div class="section-heading"><div><p class="eyebrow">EXPERIMENTAL</p><h2>Image Studio</h2></div><span class="pill">WebGPU</span></div>
+      <div class="card">
+        <p class="label">Image generation backend</p>
+        <h3>Not connected yet</h3>
+        <p class="muted">This repository is being set up in the correct location. The image interface is reserved here, but a compatible in-browser diffusion model and runtime still need to be integrated and tested before this can generate images.</p>
+        <label for="image-prompt">Image prompt</label>
+        <textarea id="image-prompt" rows="4" placeholder="Describe the image you want to create…"></textarea>
+        <div class="settings-grid">
+          <div><label for="image-width">Width</label><select id="image-width"><option>256</option><option selected>512</option><option>768</option></select></div>
+          <div><label for="image-steps">Steps</label><select id="image-steps"><option>4</option><option selected>8</option><option>12</option></select></div>
+        </div>
+        <p class="status">Image generation is intentionally disabled until its local backend is implemented. No prompt is sent anywhere.</p>
+      </div>
+    </section>
+
+    <footer><p>Designed for device-local generation. Initial model downloads need internet; browser support and available memory vary.</p><a href="https://github.com/j2grows-cmd/iphone-ai-studio">View source</a></footer>
+  </main>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
