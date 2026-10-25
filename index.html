@@ -21,6 +21,18 @@
       <button class="tab" data-mode="image" type="button">Image Studio</button>
     </nav>
 
+    <section class="card startup-card" aria-labelledby="startup-heading">
+      <div class="section-heading"><div><p class="eyebrow">QUICK START</p><h2 id="startup-heading">Model startup</h2></div><span class="pill">On-device</span></div>
+      <label for="startup-model">Prepare this model when the app opens</label>
+      <select id="startup-model">
+        <option value="off">Off — load manually</option>
+        <option value="text">Text model — Qwen2.5 0.5B</option>
+        <option value="image">Image model — SD-Turbo</option>
+      </select>
+      <p class="muted">Choose one model to auto-load. Its files can be cached after the first download, but iOS may clear browser storage. Loading both models together can exceed available memory.</p>
+      <p id="startup-status" class="status" role="status" aria-live="polite">Models are loaded only when requested.</p>
+    </section>
+
     <section id="text-panel" class="studio-panel">
       <div class="section-heading"><div><p class="eyebrow">ON-DEVICE INFERENCE</p><h2>Text Studio</h2></div><span class="pill">WebLLM</span></div>
       <div class="card model-card">
