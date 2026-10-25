@@ -9,6 +9,7 @@ A £0, local-first AI studio designed for iPhone and modern browsers. The goal i
 - **No paid inference API:** prompts are not sent to a hosted generation endpoint by this app.
 - **Local image output:** generated PNGs are shown in the page and can be downloaded.
 - **First-run downloads:** model weights and runtime files are downloaded from public model hosts. Subsequent loads may use browser caches.
+- **Startup preference:** choose one model in Model startup to have it auto-load on future visits. This preference is stored locally; the model files themselves are managed by the browser/runtime cache and may be evicted by iOS.
 - **Device limits:** WebGPU support, available memory, browser cache eviction and model compatibility vary by device. Large image-model downloads may fail on iPhones with limited available memory.
 
 ## Run locally
