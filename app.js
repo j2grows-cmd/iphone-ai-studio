@@ -260,3 +260,31 @@ $("cancel-image").addEventListener("click", async () => {
   try { await currentImageAbort(); }
   catch (error) { console.warn("Image cancellation reported:", error); }
 });
+
+
+// Auto-load one chosen model at startup. The runtime manages model asset caches;
+// iOS may still evict site data, so cached files cannot be guaranteed permanently.
+const STARTUP_MODEL_KEY = "iphone-ai-studio-startup-model";
+const startupModelSelect = $("startup-model");
+const startupStatus = $("startup-status");
+const savedStartupModel = localStorage.getItem(STARTUP_MODEL_KEY);
+if (savedStartupModel && ["off", "text", "image"].includes(savedStartupModel)) {
+  startupModelSelect.value = savedStartupModel;
+}
+startupModelSelect.addEventListener("change", () => {
+  localStorage.setItem(STARTUP_MODEL_KEY, startupModelSelect.value);
+  const labels = { off: "Manual loading enabled.", text: "Text model will auto-load on the next visit.", image: "Image model will auto-load on the next visit." };
+  startupStatus.textContent = labels[startupModelSelect.value];
+});
+
+const selectedStartupModel = startupModelSelect.value;
+if (selectedStartupModel === "text") {
+  startupStatus.textContent = "Starting text model… first-time setup downloads model files.";
+  $("load-model").click();
+} else if (selectedStartupModel === "image") {
+  document.querySelector('[data-mode="image"]').click();
+  startupStatus.textContent = "Starting image model… first-time setup may download several gigabytes.";
+  $("load-image-model").click();
+} else {
+  startupStatus.textContent = "Models are loaded only when requested.";
+}
